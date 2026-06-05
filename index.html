@@ -15,18 +15,19 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen pb-32">
+<!-- UPDATED: White/Light mode background styling applied -->
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen pb-32">
 
     <!-- Header & Metrics Dashboard -->
-    <header class="sticky top-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 z-30 px-4 py-4">
+    <header class="sticky top-0 bg-white/90 backdrop-blur-md border-b border-slate-200 z-30 px-4 py-4 shadow-sm">
         <div class="max-w-md mx-auto flex items-center justify-between">
-            <h1 class="text-xl font-bold tracking-tight text-indigo-400 flex items-center gap-2">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Trackr<span class="text-xs font-light text-slate-500">Pro</span>
+            <h1 class="text-xl font-bold tracking-tight text-indigo-600 flex items-center gap-2">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Trackr<span class="text-xs font-light text-slate-400">Pro</span>
             </h1>
-            <div class="flex gap-3 text-xs font-medium text-slate-400">
-                <div>Total: <span id="metric-total" class="text-slate-100 font-bold">0</span></div>
-                <div>Active: <span id="metric-active" class="text-amber-400 font-bold">0</span></div>
-                <div>Offers: <span id="metric-offers" class="text-emerald-400 font-bold">0</span></div>
+            <div class="flex gap-3 text-xs font-semibold text-slate-500">
+                <div>Total: <span id="metric-total" class="text-slate-800 font-bold">0</span></div>
+                <div>Active: <span id="metric-active" class="text-amber-600 font-bold">0</span></div>
+                <div>Offers: <span id="metric-offers" class="text-emerald-600 font-bold">0</span></div>
             </div>
         </div>
     </header>
@@ -34,30 +35,27 @@
     <!-- Main Content Container -->
     <main class="max-w-md mx-auto px-4 mt-4">
         
-        <!-- NEW COMPONENT: Mobile Resume Center Hub -->
-        <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4 mb-5">
+        <!-- Mobile Resume Center Hub -->
+        <div class="bg-white border border-slate-200 rounded-xl p-4 mb-5 shadow-sm">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <i data-lucide="file-text" class="w-4 h-4 text-indigo-400"></i> My Active Resume
+                    <i data-lucide="file-text" class="w-4 h-4 text-indigo-500"></i> My Active Resume
                 </h3>
-                <span id="resume-status" class="text-[11px] font-medium text-slate-500">No file uploaded</span>
+                <span id="resume-status" class="text-[11px] font-semibold text-slate-400">No file uploaded</span>
             </div>
             
             <div class="flex gap-2 items-center">
-                <!-- Hidden native input, triggered by custom beautiful styling label -->
-                <label class="flex-1 bg-slate-900 border border-slate-700 hover:border-slate-600 rounded-lg py-2.5 px-3 flex items-center justify-center gap-2 cursor-pointer transition-colors text-xs font-medium">
+                <label class="flex-1 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg py-2.5 px-3 flex items-center justify-center gap-2 cursor-pointer transition-colors text-xs font-semibold text-slate-600">
                     <i data-lucide="upload-cloud" class="w-4 h-4 text-slate-400"></i>
                     <span id="upload-label">Upload New File</span>
                     <input type="file" id="resume-input" accept=".pdf,.doc,.docx" class="hidden" onchange="handleResumeUpload(event)">
                 </label>
                 
-                <!-- Quick Download action view item -->
-                <button id="download-resume-btn" onclick="downloadResume()" disabled class="p-2.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-all" title="Download Resume">
+                <button id="download-resume-btn" onclick="downloadResume()" disabled class="p-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-all" title="Download Resume">
                     <i data-lucide="download" class="w-4 h-4"></i>
                 </button>
                 
-                <!-- Delete Resume Document Entry -->
-                <button id="delete-resume-btn" onclick="deleteResume()" disabled class="p-2.5 bg-rose-600/30 text-rose-400 border border-rose-500/20 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-all" title="Remove Resume">
+                <button id="delete-resume-btn" onclick="deleteResume()" disabled class="p-2.5 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-all" title="Remove Resume">
                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -66,19 +64,19 @@
         <!-- Filter Pills Navigation -->
         <div class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar" id="filter-tabs">
             <button onclick="setFilter('All')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-indigo-600 text-white shadow-sm transition-all whitespace-nowrap" data-filter="All">All</button>
-            <button onclick="setFilter('Applied')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Applied">Applied</button>
-            <button onclick="setFilter('Interviewing')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Interviewing">Interviews</button>
-            <button onclick="setFilter('Offer')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Offer">Offers</button>
-            <button onclick="setFilter('Rejected')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Rejected">Archived</button>
+            <button onclick="setFilter('Applied')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap" data-filter="Applied">Applied</button>
+            <button onclick="setFilter('Interviewing')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap" data-filter="Interviewing">Interviews</button>
+            <button onclick="setFilter('Offer')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap" data-filter="Offer">Offers</button>
+            <button onclick="setFilter('Rejected')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap" data-filter="Rejected">Archived</button>
         </div>
 
         <!-- Applications Feed Container -->
         <div id="applications-feed" class="space-y-4">
-            <!-- JavaScript dynamically injects entries here -->
+            <!-- JavaScript dynamic feed items load here -->
         </div>
 
         <!-- Empty State Fallback -->
-        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 text-slate-500 text-center">
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 text-slate-400 text-center">
             <i data-lucide="folder-open" class="w-12 h-12 mb-2 stroke-[1.5]"></i>
             <p class="text-sm">No job matches found in this screen view.</p>
         </div>
@@ -86,20 +84,20 @@
 
     <!-- Floating Trigger Bottom Sheet Button -->
     <div class="fixed bottom-6 left-0 right-0 px-4 z-40 max-w-md mx-auto">
-        <button onclick="toggleForm(true)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-xl shadow-indigo-900/40 flex items-center justify-center gap-2 active:scale-[0.99] transition-transform text-base">
+        <button onclick="toggleForm(true)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 active:scale-[0.99] transition-transform text-base">
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Application Details
         </button>
     </div>
 
     <!-- Interactive Mobile Drawer Panel (Slide Up Bottom Sheet) -->
-    <div id="form-overlay" class="fixed inset-0 bg-black/70 z-50 transition-opacity opacity-0 pointer-events-none duration-300" onclick="toggleForm(false)">
-        <div id="form-sheet" class="absolute bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-800 rounded-t-2xl p-6 transform translate-y-full transition-transform duration-300 ease-out overflow-y-auto max-h-[90vh]" onclick="event.stopPropagation()">
+    <div id="form-overlay" class="fixed inset-0 bg-slate-900/40 z-50 transition-opacity opacity-0 pointer-events-none duration-300" onclick="toggleForm(false)">
+        <div id="form-sheet" class="absolute bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-2xl p-6 transform translate-y-full transition-transform duration-300 ease-out overflow-y-auto max-h-[90vh] shadow-2xl" onclick="event.stopPropagation()">
             
-            <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5"></div>
             
             <div class="flex justify-between items-center mb-5">
-                <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i data-lucide="file-plus" class="text-indigo-400 w-5 h-5"></i> New Job Profile
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="file-plus" class="text-indigo-600 w-5 h-5"></i> New Job Profile
                 </h3>
                 <button onclick="toggleForm(false)" class="text-slate-400 p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
@@ -107,19 +105,19 @@
             <form id="app-form" onsubmit="saveApplication(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Company</label>
-                        <input type="text" id="form-company" required placeholder="e.g. Apple" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Company</label>
+                        <input type="text" id="form-company" required placeholder="e.g. Apple" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Role / Title</label>
-                        <input type="text" id="form-role" required placeholder="e.g. Designer" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Role / Title</label>
+                        <input type="text" id="form-role" required placeholder="e.g. Designer" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</label>
-                        <select id="form-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+                        <select id="form-status" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                             <option value="Applied">Applied</option>
                             <option value="Interviewing">Interviewing</option>
                             <option value="Offer">Offer</option>
@@ -127,29 +125,29 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Applied Date</label>
-                        <input type="date" id="form-date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Applied Date</label>
+                        <input type="date" id="form-date" required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Compensation / Salary</label>
-                    <input type="text" id="form-salary" placeholder="e.g. $120k - $140k" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Compensation / Salary</label>
+                    <input type="text" id="form-salary" placeholder="e.g. $120k - $140k" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Job Post URL</label>
-                    <input type="url" id="form-link" placeholder="https://linkedin.com/jobs/..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Job Post URL</label>
+                    <input type="url" id="form-link" placeholder="https://linkedin.com/jobs/..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Point of Contact / Recruiter</label>
-                    <input type="text" id="form-contact" placeholder="e.g. Sarah Jenkins" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Point of Contact / Recruiter</label>
+                    <input type="text" id="form-contact" placeholder="e.g. Sarah Jenkins" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Next Step / Deadline (Optional)</label>
-                    <input type="date" id="form-deadline" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Next Step / Deadline (Optional)</label>
+                    <input type="date" id="form-deadline" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-800 text-base focus:outline-none focus:border-indigo-500 focus:bg-white">
                 </div>
 
                 <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3.5 rounded-xl mt-4 active:scale-[0.98] transition-transform shadow-md">
@@ -169,18 +167,16 @@
         let currentFilter = 'All';
 
         const statusConfig = {
-            'Applied': { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/25' },
-            'Interviewing': { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/25' },
-            'Offer': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/25' },
-            'Rejected': { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/25' }
+            'Applied': { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
+            'Interviewing': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
+            'Offer': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
+            'Rejected': { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' }
         };
 
-        // NEW METHOD: Process upload, converting raw binary into Base64 format string chunks for storage
         function handleResumeUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            // Enforce a sensible client-side file size constraint (2.5MB max for local browser storage bounds)
             if (file.size > 2.5 * 1024 * 1024) {
                 alert("File is too large! Please select a file smaller than 2.5MB.");
                 return;
@@ -198,7 +194,6 @@
             reader.readAsDataURL(file);
         }
 
-        // NEW METHOD: Trigger browser down-stream event channels mimicking remote server binary downloads
         function downloadResume() {
             const resumeJSON = localStorage.getItem('stored_resume_profile');
             if (!resumeJSON) return;
@@ -212,16 +207,14 @@
             document.body.removeChild(downloadLink);
         }
 
-        // NEW METHOD: Delete cached portfolio document records
         function deleteResume() {
             if (confirm("Are you sure you want to remove your stored resume file?")) {
                 localStorage.removeItem('stored_resume_profile');
-                document.getElementById('resume-input').value = ""; // Clear file selector buffer
+                document.getElementById('resume-input').value = "";
                 renderResumeSection();
             }
         }
 
-        // NEW METHOD: Update visual status indications across the tracking control bars
         function renderResumeSection() {
             const resumeJSON = localStorage.getItem('stored_resume_profile');
             const statusText = document.getElementById('resume-status');
@@ -230,15 +223,14 @@
             const deleteBtn = document.getElementById('delete-resume-btn');
 
             if (resumeJSON) {
-                const resume = JSON.parse(resumeJSON);
                 statusText.innerText = "Ready";
-                statusText.className = "text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded";
+                statusText.className = "text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded";
                 uploadLabel.innerText = "Replace Document";
                 downloadBtn.removeAttribute('disabled');
                 deleteBtn.removeAttribute('disabled');
             } else {
                 statusText.innerText = "No file uploaded";
-                statusText.className = "text-[11px] font-medium text-slate-500";
+                statusText.className = "text-[11px] font-medium text-slate-400";
                 uploadLabel.innerText = "Upload Resume File";
                 downloadBtn.setAttribute('disabled', 'true');
                 deleteBtn.setAttribute('disabled', 'true');
@@ -307,7 +299,7 @@
                 if(tab.getAttribute('data-filter') === filterType) {
                     tab.className = "filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-indigo-600 text-white shadow-sm transition-all whitespace-nowrap";
                 } else {
-                    tab.className = "filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap";
+                    tab.className = "filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap";
                 }
             });
             render();
@@ -343,47 +335,47 @@
                 if(app.deadline) {
                     const deadDate = new Date(app.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     deadlineBadge = `
-                        <div class="mt-2 inline-flex items-center gap-1 text-[11px] font-medium bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded-md border border-rose-500/20">
+                        <div class="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md border border-rose-100">
                             <i data-lucide="clock" class="w-3 h-3"></i> Next Step: ${deadDate}
                         </div>
                     `;
                 }
 
                 const salaryRow = app.salary ? `
-                    <div class="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-                        <i data-lucide="banknote" class="w-3.5 h-3.5 text-emerald-500"></i> ${app.salary}
+                    <div class="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                        <i data-lucide="banknote" class="w-3.5 h-3.5 text-emerald-600"></i> ${app.salary}
                     </div>` : '';
 
                 const contactRow = app.contact ? `
-                    <div class="flex items-center gap-1.5 text-xs text-slate-400 truncate">
-                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500"></i> ${app.contact}
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500 truncate">
+                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i> ${app.contact}
                     </div>` : '';
 
                 const linkElement = app.link ? `
-                    <a href="${app.link}" target="_blank" onclick="event.stopPropagation()" class="p-2 text-indigo-400 bg-slate-900 rounded-lg hover:text-indigo-300 border border-slate-700/50">
+                    <a href="${app.link}" target="_blank" onclick="event.stopPropagation()" class="p-2 text-indigo-600 bg-slate-50 rounded-lg hover:text-indigo-700 border border-slate-200">
                         <i data-lucide="external-link" class="w-4 h-4"></i>
                     </a>` : '';
 
                 return `
-                    <div class="bg-slate-800/50 border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-sm">
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-sm">
                         <div class="flex justify-between items-start gap-2">
                             <div class="min-w-0 flex-1">
-                                <h4 class="text-base font-bold text-slate-100 truncate">${app.company}</h4>
-                                <p class="text-xs text-slate-400 font-medium truncate mt-0.5">${app.role}</p>
+                                <h4 class="text-base font-bold text-slate-800 truncate">${app.company}</h4>
+                                <p class="text-xs text-slate-500 font-medium truncate mt-0.5">${app.role}</p>
                             </div>
                             <button onclick="cycleStatus(${app.id}, event)" class="px-2.5 py-1 text-xs font-bold rounded-lg border ${conf.bg} ${conf.text} ${conf.border} transition-all tracking-wide">
                                 ${app.status}
                             </button>
                         </div>
 
-                        <div class="space-y-1.5 border-t border-slate-800/60 pt-3">
+                        <div class="space-y-1.5 border-t border-slate-100 pt-3">
                             ${salaryRow}
                             ${contactRow}
                         </div>
 
-                        <div class="flex justify-between items-center border-t border-slate-800/60 pt-3 mt-1">
+                        <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-1">
                             <div class="flex flex-col items-start">
-                                <span class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                <span class="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
                                     <i data-lucide="calendar" class="w-3 h-3"></i> Filed ${appDate}
                                 </span>
                                 ${deadlineBadge}
@@ -391,7 +383,7 @@
                             
                             <div class="flex items-center gap-2">
                                 ${linkElement}
-                                <button onclick="deleteApp(${app.id}, event)" class="text-slate-500 p-2 hover:text-rose-400 transition-all">
+                                <button onclick="deleteApp(${app.id}, event)" class="text-slate-400 p-2 hover:text-rose-600 transition-all">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
