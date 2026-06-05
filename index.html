@@ -147,143 +147,144 @@
     </div>
 
     <script>
-    const SYNC_ROOM_ID = 'universal_trackr_2026';
-    const API_ENDPOINT = `https://kvbin.glitch.me/bins/${SYNC_ROOM_ID}`;
+    const JSONBIN_KEY = '$2a$10$ZYvJMJWxhZSYkI6w2/KG6OMsklsvtwOkqangeWSbd1HK/AkGSy.fi';
+    const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+    const LS_BIN = 'trackrpro_bin_id';
+    const LS_APPS = 'interview_tracker_pro_apps';
+    const LS_RESUME = 'stored_resume_profile';
 
-    let apps = JSON.parse(localStorage.getItem('interview_tracker_pro_apps')) || [];
+    let apps = JSON.parse(localStorage.getItem(LS_APPS) || '[]');
+    let binId = localStorage.getItem(LS_BIN) || null;
     let currentFilter = 'All';
+    let syncTimer = null;
+    let isSyncing = false;
 
     const statusConfig = {
-        'Applied': { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
-        'Interviewing': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-100' },
-        'Offer': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
-        'Rejected': { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' }
+        'Applied':      { bg: 'bg-blue-50',    text: 'text-blue-600',    border: 'border-blue-100'   },
+        'Interviewing': { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-100'  },
+        'Offer':        { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100' },
+        'Rejected':     { bg: 'bg-slate-100',  text: 'text-slate-600',   border: 'border-slate-200'  }
     };
 
     function setVisualIndicator(state) {
         const ind = document.getElementById('cloud-indicator');
-        if(!ind) return;
+        if (!ind) return;
         ind.classList.remove('bg-amber-400', 'bg-emerald-500', 'bg-rose-500', 'animate-pulse');
         if (state === 'syncing') {
             ind.classList.add('bg-amber-400', 'animate-pulse');
         } else if (state === 'online') {
             ind.classList.add('bg-emerald-500');
         } else {
-            ind.classList.add('bg-rose-500'); // Red indicator on network failure
+            ind.classList.add('bg-rose-500');
         }
     }
 
-    // Silent Automated Cloud Push Pipeline
+    async function apiHeaders() {
+        return { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
+    }
+
+    async function createBin(payload) {
+        const res = await fetch(`${JSONBIN_BASE}/b`, {
+            method: 'POST',
+            headers: { ...(await apiHeaders()), 'X-Bin-Name': 'TrackrPro', 'X-Bin-Private': 'false' },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        return json.metadata?.id || null;
+    }
+
     async function pushToCloud() {
+        if (isSyncing) return;
+        isSyncing = true;
         setVisualIndicator('syncing');
-        const payload = {
-            apps: apps,
-            resume: localStorage.getItem('stored_resume_profile')
-        };
+        const payload = { apps, resume: localStorage.getItem(LS_RESUME) || null };
         try {
-            const res = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) {
-                setVisualIndicator('online');
-                return true;
+            if (!binId) {
+                binId = await createBin(payload);
+                if (binId) localStorage.setItem(LS_BIN, binId);
             } else {
-                setVisualIndicator('offline');
-                return false;
+                await fetch(`${JSONBIN_BASE}/b/${binId}`, {
+                    method: 'PUT',
+                    headers: await apiHeaders(),
+                    body: JSON.stringify(payload)
+                });
             }
-        } catch (err) {
+            setVisualIndicator('online');
+        } catch (e) {
             setVisualIndicator('offline');
-            console.error('Push failed.', err);
-            return false;
+            console.error('Push failed', e);
+        }
+        isSyncing = false;
+    }
+
+    async function pullFromCloud() {
+        if (!binId) { setVisualIndicator('offline'); return; }
+        setVisualIndicator('syncing');
+        try {
+            const res = await fetch(`${JSONBIN_BASE}/b/${binId}/latest`, { headers: await apiHeaders() });
+            if (!res.ok) { setVisualIndicator('offline'); return; }
+            const json = await res.json();
+            const data = json.record;
+            if (data?.apps) {
+                apps = data.apps;
+                localStorage.setItem(LS_APPS, JSON.stringify(apps));
+            }
+            if (data?.resume) localStorage.setItem(LS_RESUME, data.resume);
+            else localStorage.removeItem(LS_RESUME);
+            renderResumeSection();
+            render();
+            setVisualIndicator('online');
+        } catch (e) {
+            setVisualIndicator('offline');
+            console.warn('Pull failed', e);
         }
     }
 
-    // Silent Automated Cloud Pull Pipeline
-    async function pullFromCloud() {
-        try {
-            const res = await fetch(API_ENDPOINT);
-            if (res.ok) {
-                const data = await res.json();
-                if (data && typeof data === 'object') {
-                    if (data.apps) {
-                        apps = data.apps;
-                        localStorage.setItem('interview_tracker_pro_apps', JSON.stringify(apps));
-                    }
-                    if (data.resume) {
-                        localStorage.setItem('stored_resume_profile', data.resume);
-                    } else {
-                        localStorage.removeItem('stored_resume_profile');
-                    }
-                    renderResumeSection();
-                    render();
-                }
-                setVisualIndicator('online');
-            } else if (res.status === 404) {
-                // Bin doesn't exist yet, seed it safely
-                console.log('Registry node not found on cloud server. Seeding initialization payload...');
-                await pushToCloud();
-            } else {
-                setVisualIndicator('offline');
-            }
-        } catch (err) {
-            setVisualIndicator('offline');
-            console.warn('Network unreachable or endpoint throttled.');
-        }
+    function debouncedPush() {
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(pushToCloud, 800);
     }
 
     function handleResumeUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         if (file.size > 1.2 * 1024 * 1024) {
-            alert("File size alert: Please down-compress your document below 1.2MB to authorize multi-device parsing.");
+            alert("File size alert: Please compress your document below 1.2MB.");
             return;
         }
-
         const reader = new FileReader();
         reader.onload = function(e) {
-            const resumeData = {
-                name: file.name,
-                dataUrl: e.target.result
-            };
-            localStorage.setItem('stored_resume_profile', JSON.stringify(resumeData));
+            localStorage.setItem(LS_RESUME, JSON.stringify({ name: file.name, dataUrl: e.target.result }));
             renderResumeSection();
-            syncData();
+            debouncedPush();
         };
         reader.readAsDataURL(file);
     }
 
     function downloadResume() {
-        const resumeJSON = localStorage.getItem('stored_resume_profile');
+        const resumeJSON = localStorage.getItem(LS_RESUME);
         if (!resumeJSON) return;
-
         const resume = JSON.parse(resumeJSON);
-        const downloadLink = document.createElement("a");
-        downloadLink.href = resume.dataUrl;
-        downloadLink.download = resume.name;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
+        const a = document.createElement("a");
+        a.href = resume.dataUrl; a.download = resume.name;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
     function deleteResume() {
         if (confirm("Purge asset across synced nodes?")) {
-            localStorage.removeItem('stored_resume_profile');
+            localStorage.removeItem(LS_RESUME);
             document.getElementById('resume-input').value = "";
             renderResumeSection();
-            syncData();
+            debouncedPush();
         }
     }
 
     function renderResumeSection() {
-        const resumeJSON = localStorage.getItem('stored_resume_profile');
+        const resumeJSON = localStorage.getItem(LS_RESUME);
         const statusText = document.getElementById('resume-status');
         const uploadLabel = document.getElementById('upload-label');
         const downloadBtn = document.getElementById('download-resume-btn');
         const deleteBtn = document.getElementById('delete-resume-btn');
-
         if (resumeJSON) {
             statusText.innerText = "Ready";
             statusText.className = "text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded";
@@ -293,7 +294,7 @@
         } else {
             statusText.innerText = "No file uploaded";
             statusText.className = "text-[11px] font-medium text-slate-400";
-            uploadLabel.innerText = "Upload Resume File";
+            uploadLabel.innerText = "Upload New File";
             downloadBtn.setAttribute('disabled', 'true');
             deleteBtn.setAttribute('disabled', 'true');
         }
@@ -302,8 +303,7 @@
     function toggleForm(show) {
         const overlay = document.getElementById('form-overlay');
         const sheet = document.getElementById('form-sheet');
-        
-        if(show) {
+        if (show) {
             document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
             overlay.classList.remove('pointer-events-none', 'opacity-0');
             sheet.classList.remove('translate-y-full');
@@ -327,7 +327,6 @@
             contact: document.getElementById('form-contact').value,
             deadline: document.getElementById('form-deadline').value
         };
-
         apps.unshift(newApp);
         syncData();
         toggleForm(false);
@@ -337,10 +336,9 @@
         event.stopPropagation();
         const statusOrder = ['Applied', 'Interviewing', 'Offer', 'Rejected'];
         apps = apps.map(app => {
-            if(app.id === id) {
-                const currentIndex = statusOrder.indexOf(app.status);
-                const nextIndex = (currentIndex + 1) % statusOrder.length;
-                app.status = statusOrder[nextIndex];
+            if (app.id === id) {
+                const next = (statusOrder.indexOf(app.status) + 1) % statusOrder.length;
+                app.status = statusOrder[next];
             }
             return app;
         });
@@ -349,7 +347,7 @@
 
     function deleteApp(id, event) {
         event.stopPropagation();
-        if(confirm('Delete application record?')) {
+        if (confirm('Delete application record?')) {
             apps = apps.filter(app => app.id !== id);
             syncData();
         }
@@ -358,7 +356,7 @@
     function setFilter(filterType) {
         currentFilter = filterType;
         document.querySelectorAll('.filter-tab').forEach(tab => {
-            if(tab.getAttribute('data-filter') === filterType) {
+            if (tab.getAttribute('data-filter') === filterType) {
                 tab.className = "filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-indigo-600 text-white shadow-sm transition-all whitespace-nowrap";
             } else {
                 tab.className = "filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap";
@@ -368,22 +366,22 @@
     }
 
     function syncData() {
-        localStorage.setItem('interview_tracker_pro_apps', JSON.stringify(apps));
+        localStorage.setItem(LS_APPS, JSON.stringify(apps));
         render();
-        pushToCloud();
+        debouncedPush();
     }
 
     function render() {
         const feed = document.getElementById('applications-feed');
         const emptyState = document.getElementById('empty-state');
-        
+
         document.getElementById('metric-total').innerText = apps.length;
         document.getElementById('metric-active').innerText = apps.filter(a => a.status === 'Interviewing' || a.status === 'Applied').length;
         document.getElementById('metric-offers').innerText = apps.filter(a => a.status === 'Offer').length;
 
         const filteredApps = apps.filter(app => currentFilter === 'All' || app.status === currentFilter);
 
-        if(filteredApps.length === 0) {
+        if (filteredApps.length === 0) {
             feed.innerHTML = '';
             emptyState.classList.remove('hidden');
             return;
@@ -393,15 +391,14 @@
         feed.innerHTML = filteredApps.map(app => {
             const conf = statusConfig[app.status];
             const appDate = new Date(app.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            
+
             let deadlineBadge = '';
-            if(app.deadline) {
+            if (app.deadline) {
                 const deadDate = new Date(app.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 deadlineBadge = `
                     <div class="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md border border-rose-100">
                         <i data-lucide="clock" class="w-3.5 h-3.5"></i> Next Step: ${deadDate}
-                    </div>
-                `;
+                    </div>`;
             }
 
             const salaryRow = app.salary ? `
@@ -430,12 +427,10 @@
                             ${app.status}
                         </button>
                     </div>
-
                     <div class="space-y-1.5 border-t border-slate-100 pt-3">
                         ${salaryRow}
                         ${contactRow}
                     </div>
-
                     <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-1">
                         <div class="flex flex-col items-start">
                             <span class="text-[11px] text-slate-400 font-semibold flex items-center gap-1">
@@ -443,7 +438,6 @@
                             </span>
                             ${deadlineBadge}
                         </div>
-                        
                         <div class="flex items-center gap-2">
                             ${linkElement}
                             <button onclick="deleteApp(${app.id}, event)" class="text-slate-400 p-2 hover:text-rose-600 transition-all">
@@ -451,26 +445,22 @@
                             </button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }).join('');
 
         lucide.createIcons();
     }
 
-    // Initial Initialization Hooks
     document.addEventListener("DOMContentLoaded", async () => {
         renderResumeSection();
         render();
-        
-        // 1. Initial configuration payload pull
-        await pullFromCloud(); 
-
-        // 2. Continuous Polling loop shifted to a safer 15 seconds to avoid API throttling
-        setInterval(async () => {
+        if (binId) {
             await pullFromCloud();
-        }, 15000);
+        } else {
+            await pushToCloud();
+        }
+        setInterval(pullFromCloud, 15000);
     });
-</script>
+    </script>
 </body>
 </html>
