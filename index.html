@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trackr Pro // Mobile Interview Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
+        /* Custom scrollbar hiding for clean category pills */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen pb-32">
+
+    <!-- Header & Metrics Dashboard -->
+    <header class="sticky top-0 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 z-30 px-4 py-4">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <h1 class="text-xl font-bold tracking-tight text-indigo-400 flex items-center gap-2">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Trackr<span class="text-xs font-light text-slate-500">Pro</span>
+            </h1>
+            <div class="flex gap-3 text-xs font-medium text-slate-400">
+                <div>Total: <span id="metric-total" class="text-slate-100 font-bold">0</span></div>
+                <div>Active: <span id="metric-active" class="text-amber-400 font-bold">0</span></div>
+                <div>Offers: <span id="metric-offers" class="text-emerald-400 font-bold">0</span></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-md mx-auto px-4 mt-4">
+        
+        <!-- Filter Pills Navigation -->
+        <div class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar" id="filter-tabs">
+            <button onclick="setFilter('All')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-indigo-600 text-white shadow-sm transition-all whitespace-nowrap" data-filter="All">All</button>
+            <button onclick="setFilter('Applied')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Applied">Applied</button>
+            <button onclick="setFilter('Interviewing')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Interviewing">Interviews</button>
+            <button onclick="setFilter('Offer')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Offer">Offers</button>
+            <button onclick="setFilter('Rejected')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap" data-filter="Rejected">Archived</button>
+        </div>
+
+        <!-- Applications Feed Container -->
+        <div id="applications-feed" class="space-y-4">
+            <!-- JavaScript dynamically injects card entries here -->
+        </div>
+
+        <!-- Empty State Fallback -->
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 text-slate-500 text-center">
+            <i data-lucide="folder-open" class="w-12 h-12 mb-2 stroke-[1.5]"></i>
+            <p class="text-sm">No job matches found in this screen view.</p>
+        </div>
+    </main>
+
+    <!-- Floating Trigger Bottom Sheet Button -->
+    <div class="fixed bottom-6 left-0 right-0 px-4 z-40 max-w-md mx-auto">
+        <button onclick="toggleForm(true)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-xl shadow-indigo-900/40 flex items-center justify-center gap-2 active:scale-[0.99] transition-transform text-base">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Application Details
+        </button>
+    </div>
+
+    <!-- Interactive Mobile Drawer Panel (Slide Up Bottom Sheet) -->
+    <div id="form-overlay" class="fixed inset-0 bg-black/70 z-50 transition-opacity opacity-0 pointer-events-none duration-300" onclick="toggleForm(false)">
+        <div id="form-sheet" class="absolute bottom-0 left-0 right-0 max-w-md mx-auto bg-slate-800 rounded-t-2xl p-6 transform translate-y-full transition-transform duration-300 ease-out overflow-y-auto max-h-[90vh]" onclick="event.stopPropagation()">
+            
+            <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-5"></div>
+            
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="file-text" class="text-indigo-400 w-5 h-5"></i> New Job Profile
+                </h3>
+                <button onclick="toggleForm(false)" class="text-slate-400 p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+
+            <!-- Enhanced Application Form Structuring Additional Attributes -->
+            <form id="app-form" onsubmit="saveApplication(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Company</label>
+                        <input type="text" id="form-company" required placeholder="e.g. Apple" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Role / Title</label>
+                        <input type="text" id="form-role" required placeholder="e.g. Designer" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Status</label>
+                        <select id="form-status" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                            <option value="Applied">Applied</option>
+                            <option value="Interviewing">Interviewing</option>
+                            <option value="Offer">Offer</option>
+                            <option value="Rejected">Rejected</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Applied Date</label>
+                        <input type="date" id="form-date" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- NEW COMPONENT: Salary Range Attribute Field -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Compensation / Salary</label>
+                    <input type="text" id="form-salary" placeholder="e.g. $120k - $140k or €90k" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <!-- NEW COMPONENT: Job Listing Link Reference Asset -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Job Post URL</label>
+                    <input type="url" id="form-link" placeholder="https://linkedin.com/jobs/..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <!-- NEW COMPONENT: Interviewer Contact Metadata Structure -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Point of Contact / Recruiter</label>
+                    <input type="text" id="form-contact" placeholder="e.g. Sarah Jenkins (s.jenkins@co.com)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <!-- NEW COMPONENT: Next Target Deadline Notification Event Trigger Date -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Next Step / Deadline (Optional)</label>
+                    <input type="date" id="form-deadline" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3.5 rounded-xl mt-4 active:scale-[0.98] transition-transform shadow-md">
+                    Commit to Tracker Registry
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script Logic Block Architecture -->
+    <script>
+        // Core Reactive App State Initialization with Expanded Properties Example
+        let apps = JSON.parse(localStorage.getItem('interview_tracker_pro_apps')) || [
+            { 
+                id: 1, 
+                company: 'Netflix', 
+                role: 'Senior Product Engineer', 
+                status: 'Interviewing', 
+                date: '2026-06-01',
+                salary: '$210,000 base',
+                link: 'https://netflix.com/careers',
+                contact: 'Marcus Vance (Recruiter)',
+                deadline: '2026-06-10'
+            },
+            { 
+                id: 2, 
+                company: 'Linear', 
+                role: 'Full Stack Developer', 
+                status: 'Applied', 
+                date: '2026-06-04',
+                salary: '$160k + Equity',
+                link: 'https://linear.app/careers',
+                contact: 'Karla Finch',
+                deadline: ''
+            }
+        ];
+        
+        let currentFilter = 'All';
+
+        const statusConfig = {
+            'Applied': { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/25' },
+            'Interviewing': { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/25' },
+            'Offer': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/25' },
+            'Rejected': { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/25' }
+        };
+
+        function toggleForm(show) {
+            const overlay = document.getElementById('form-overlay');
+            const sheet = document.getElementById('form-sheet');
+            
+            if(show) {
+                document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
+                overlay.classList.remove('pointer-events-none', 'opacity-0');
+                sheet.classList.remove('translate-y-full');
+            } else {
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+                sheet.classList.add('translate-y-full');
+                document.getElementById('app-form').reset();
+            }
+        }
+
+        function saveApplication(e) {
+            e.preventDefault();
+            const newApp = {
+                id: Date.now(),
+                company: document.getElementById('form-company').value,
+                role: document.getElementById('form-role').value,
+                status: document.getElementById('form-status').value,
+                date: document.getElementById('form-date').value,
+                salary: document.getElementById('form-salary').value,
+                link: document.getElementById('form-link').value,
+                contact: document.getElementById('form-contact').value,
+                deadline: document.getElementById('form-deadline').value
+            };
+
+            apps.unshift(newApp);
+            syncData();
+            toggleForm(false);
+        }
+
+        function cycleStatus(id, event) {
+            event.stopPropagation();
+            const statusOrder = ['Applied', 'Interviewing', 'Offer', 'Rejected'];
+            apps = apps.map(app => {
+                if(app.id === id) {
+                    const currentIndex = statusOrder.indexOf(app.status);
+                    const nextIndex = (currentIndex + 1) % statusOrder.length;
+                    app.status = statusOrder[nextIndex];
+                }
+                return app;
+            });
+            syncData();
+        }
+
+        function deleteApp(id, event) {
+            event.stopPropagation();
+            if(confirm('Delete application record?')) {
+                apps = apps.filter(app => app.id !== id);
+                syncData();
+            }
+        }
+
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                if(tab.getAttribute('data-filter') === filterType) {
+                    tab.className = "filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-indigo-600 text-white shadow-sm transition-all whitespace-nowrap";
+                } else {
+                    tab.className = "filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-slate-800 text-slate-400 transition-all whitespace-nowrap";
+                }
+            });
+            render();
+        }
+
+        function syncData() {
+            localStorage.setItem('interview_tracker_pro_apps', JSON.stringify(apps));
+            render();
+        }
+
+        function render() {
+            const feed = document.getElementById('applications-feed');
+            const emptyState = document.getElementById('empty-state');
+            
+            document.getElementById('metric-total').innerText = apps.length;
+            document.getElementById('metric-active').innerText = apps.filter(a => a.status === 'Interviewing' || a.status === 'Applied').length;
+            document.getElementById('metric-offers').innerText = apps.filter(a => a.status === 'Offer').length;
+
+            const filteredApps = apps.filter(app => currentFilter === 'All' || app.status === currentFilter);
+
+            if(filteredApps.length === 0) {
+                feed.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            feed.innerHTML = filteredApps.map(app => {
+                const conf = statusConfig[app.status];
+                const appDate = new Date(app.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                // Optional Deadline Parsing layout
+                let deadlineBadge = '';
+                if(app.deadline) {
+                    const deadDate = new Date(app.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    deadlineBadge = `
+                        <div class="mt-2 inline-flex items-center gap-1 text-[11px] font-medium bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded-md border border-rose-500/20">
+                            <i data-lucide="clock" class="w-3 h-3"></i> Next Step: ${deadDate}
+                        </div>
+                    `;
+                }
+
+                // Conditional layout formatting parameters for supplemental parameters
+                const salaryRow = app.salary ? `
+                    <div class="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
+                        <i data-lucide="banknote" class="w-3.5 h-3.5 text-emerald-500"></i> ${app.salary}
+                    </div>` : '';
+
+                const contactRow = app.contact ? `
+                    <div class="flex items-center gap-1.5 text-xs text-slate-400 truncate">
+                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-500"></i> ${app.contact}
+                    </div>` : '';
+
+                const linkElement = app.link ? `
+                    <a href="${app.link}" target="_blank" onclick="event.stopPropagation()" class="p-2 text-indigo-400 bg-slate-900 rounded-lg hover:text-indigo-300 border border-slate-700/50">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                    </a>` : '';
+
+                return `
+                    <div class="bg-slate-800/50 border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-sm">
+                        <!-- Top Content Row Block -->
+                        <div class="flex justify-between items-start gap-2">
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-base font-bold text-slate-100 truncate">${app.company}</h4>
+                                <p class="text-xs text-slate-400 font-medium truncate mt-0.5">${app.role}</p>
+                            </div>
+                            <!-- Status Action Target Selector Badge -->
+                            <button onclick="cycleStatus(${app.id}, event)" class="px-2.5 py-1 text-xs font-bold rounded-lg border ${conf.bg} ${conf.text} ${conf.border} transition-all tracking-wide">
+                                ${app.status}
+                            </button>
+                        </div>
+
+                        <!-- Secondary Extended Attribute Grid Frame -->
+                        <div class="space-y-1.5 border-t border-slate-800/60 pt-3">
+                            ${salaryRow}
+                            ${contactRow}
+                        </div>
+
+                        <!-- Footer Actions Row Element Layout -->
+                        <div class="flex justify-between items-center border-t border-slate-800/60 pt-3 mt-1">
+                            <div class="flex flex-col items-start">
+                                <span class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                    <i data-lucide="calendar" class="w-3 h-3"></i> Filed ${appDate}
+                                </span>
+                                ${deadlineBadge}
+                            </div>
+                            
+                            <div class="flex items-center gap-2">
+                                ${linkElement}
+                                <button onclick="deleteApp(${app.id}, event)" class="text-slate-500 p-2 hover:text-rose-400 transition-all">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            render();
+        });
+    </script>
+</body>
+</html>
