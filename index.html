@@ -11,7 +11,6 @@
             -webkit-tap-highlight-color: transparent;
             overscroll-behavior-y: contain;
         }
-        /* Custom scrollbar hiding for clean category pills */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -35,6 +34,35 @@
     <!-- Main Content Container -->
     <main class="max-w-md mx-auto px-4 mt-4">
         
+        <!-- NEW COMPONENT: Mobile Resume Center Hub -->
+        <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-4 mb-5">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="file-text" class="w-4 h-4 text-indigo-400"></i> My Active Resume
+                </h3>
+                <span id="resume-status" class="text-[11px] font-medium text-slate-500">No file uploaded</span>
+            </div>
+            
+            <div class="flex gap-2 items-center">
+                <!-- Hidden native input, triggered by custom beautiful styling label -->
+                <label class="flex-1 bg-slate-900 border border-slate-700 hover:border-slate-600 rounded-lg py-2.5 px-3 flex items-center justify-center gap-2 cursor-pointer transition-colors text-xs font-medium">
+                    <i data-lucide="upload-cloud" class="w-4 h-4 text-slate-400"></i>
+                    <span id="upload-label">Upload New File</span>
+                    <input type="file" id="resume-input" accept=".pdf,.doc,.docx" class="hidden" onchange="handleResumeUpload(event)">
+                </label>
+                
+                <!-- Quick Download action view item -->
+                <button id="download-resume-btn" onclick="downloadResume()" disabled class="p-2.5 bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-all" title="Download Resume">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                </button>
+                
+                <!-- Delete Resume Document Entry -->
+                <button id="delete-resume-btn" onclick="deleteResume()" disabled class="p-2.5 bg-rose-600/30 text-rose-400 border border-rose-500/20 rounded-lg disabled:opacity-30 disabled:pointer-events-none transition-all" title="Remove Resume">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        
         <!-- Filter Pills Navigation -->
         <div class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar" id="filter-tabs">
             <button onclick="setFilter('All')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-indigo-600 text-white shadow-sm transition-all whitespace-nowrap" data-filter="All">All</button>
@@ -46,7 +74,7 @@
 
         <!-- Applications Feed Container -->
         <div id="applications-feed" class="space-y-4">
-            <!-- JavaScript dynamically injects card entries here -->
+            <!-- JavaScript dynamically injects entries here -->
         </div>
 
         <!-- Empty State Fallback -->
@@ -71,12 +99,11 @@
             
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                    <i data-lucide="file-text" class="text-indigo-400 w-5 h-5"></i> New Job Profile
+                    <i data-lucide="file-plus" class="text-indigo-400 w-5 h-5"></i> New Job Profile
                 </h3>
                 <button onclick="toggleForm(false)" class="text-slate-400 p-1"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
 
-            <!-- Enhanced Application Form Structuring Additional Attributes -->
             <form id="app-form" onsubmit="saveApplication(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -105,25 +132,21 @@
                     </div>
                 </div>
 
-                <!-- NEW COMPONENT: Salary Range Attribute Field -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Compensation / Salary</label>
-                    <input type="text" id="form-salary" placeholder="e.g. $120k - $140k or €90k" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="form-salary" placeholder="e.g. $120k - $140k" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
                 </div>
 
-                <!-- NEW COMPONENT: Job Listing Link Reference Asset -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Job Post URL</label>
                     <input type="url" id="form-link" placeholder="https://linkedin.com/jobs/..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
                 </div>
 
-                <!-- NEW COMPONENT: Interviewer Contact Metadata Structure -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Point of Contact / Recruiter</label>
-                    <input type="text" id="form-contact" placeholder="e.g. Sarah Jenkins (s.jenkins@co.com)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="form-contact" placeholder="e.g. Sarah Jenkins" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
                 </div>
 
-                <!-- NEW COMPONENT: Next Target Deadline Notification Event Trigger Date -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Next Step / Deadline (Optional)</label>
                     <input type="date" id="form-deadline" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 text-base focus:outline-none focus:border-indigo-500">
@@ -138,30 +161,9 @@
 
     <!-- Application Script Logic Block Architecture -->
     <script>
-        // Core Reactive App State Initialization with Expanded Properties Example
+        // Data Structures Initialization
         let apps = JSON.parse(localStorage.getItem('interview_tracker_pro_apps')) || [
-            { 
-                id: 1, 
-                company: 'Netflix', 
-                role: 'Senior Product Engineer', 
-                status: 'Interviewing', 
-                date: '2026-06-01',
-                salary: '$210,000 base',
-                link: 'https://netflix.com/careers',
-                contact: 'Marcus Vance (Recruiter)',
-                deadline: '2026-06-10'
-            },
-            { 
-                id: 2, 
-                company: 'Linear', 
-                role: 'Full Stack Developer', 
-                status: 'Applied', 
-                date: '2026-06-04',
-                salary: '$160k + Equity',
-                link: 'https://linear.app/careers',
-                contact: 'Karla Finch',
-                deadline: ''
-            }
+            { id: 1, company: 'Netflix', role: 'Senior Product Engineer', status: 'Interviewing', date: '2026-06-01', salary: '$210,000 base', link: 'https://netflix.com/careers', contact: 'Marcus Vance', deadline: '2026-06-12' }
         ];
         
         let currentFilter = 'All';
@@ -172,6 +174,76 @@
             'Offer': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/25' },
             'Rejected': { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/25' }
         };
+
+        // NEW METHOD: Process upload, converting raw binary into Base64 format string chunks for storage
+        function handleResumeUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Enforce a sensible client-side file size constraint (2.5MB max for local browser storage bounds)
+            if (file.size > 2.5 * 1024 * 1024) {
+                alert("File is too large! Please select a file smaller than 2.5MB.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const resumeData = {
+                    name: file.name,
+                    dataUrl: e.target.result
+                };
+                localStorage.setItem('stored_resume_profile', JSON.stringify(resumeData));
+                renderResumeSection();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // NEW METHOD: Trigger browser down-stream event channels mimicking remote server binary downloads
+        function downloadResume() {
+            const resumeJSON = localStorage.getItem('stored_resume_profile');
+            if (!resumeJSON) return;
+
+            const resume = JSON.parse(resumeJSON);
+            const downloadLink = document.createElement("a");
+            downloadLink.href = resume.dataUrl;
+            downloadLink.download = resume.name;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // NEW METHOD: Delete cached portfolio document records
+        function deleteResume() {
+            if (confirm("Are you sure you want to remove your stored resume file?")) {
+                localStorage.removeItem('stored_resume_profile');
+                document.getElementById('resume-input').value = ""; // Clear file selector buffer
+                renderResumeSection();
+            }
+        }
+
+        // NEW METHOD: Update visual status indications across the tracking control bars
+        function renderResumeSection() {
+            const resumeJSON = localStorage.getItem('stored_resume_profile');
+            const statusText = document.getElementById('resume-status');
+            const uploadLabel = document.getElementById('upload-label');
+            const downloadBtn = document.getElementById('download-resume-btn');
+            const deleteBtn = document.getElementById('delete-resume-btn');
+
+            if (resumeJSON) {
+                const resume = JSON.parse(resumeJSON);
+                statusText.innerText = "Ready";
+                statusText.className = "text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded";
+                uploadLabel.innerText = "Replace Document";
+                downloadBtn.removeAttribute('disabled');
+                deleteBtn.removeAttribute('disabled');
+            } else {
+                statusText.innerText = "No file uploaded";
+                statusText.className = "text-[11px] font-medium text-slate-500";
+                uploadLabel.innerText = "Upload Resume File";
+                downloadBtn.setAttribute('disabled', 'true');
+                deleteBtn.setAttribute('disabled', 'true');
+            }
+        }
 
         function toggleForm(show) {
             const overlay = document.getElementById('form-overlay');
@@ -267,7 +339,6 @@
                 const conf = statusConfig[app.status];
                 const appDate = new Date(app.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 
-                // Optional Deadline Parsing layout
                 let deadlineBadge = '';
                 if(app.deadline) {
                     const deadDate = new Date(app.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -278,7 +349,6 @@
                     `;
                 }
 
-                // Conditional layout formatting parameters for supplemental parameters
                 const salaryRow = app.salary ? `
                     <div class="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
                         <i data-lucide="banknote" class="w-3.5 h-3.5 text-emerald-500"></i> ${app.salary}
@@ -296,25 +366,21 @@
 
                 return `
                     <div class="bg-slate-800/50 border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-sm">
-                        <!-- Top Content Row Block -->
                         <div class="flex justify-between items-start gap-2">
                             <div class="min-w-0 flex-1">
                                 <h4 class="text-base font-bold text-slate-100 truncate">${app.company}</h4>
                                 <p class="text-xs text-slate-400 font-medium truncate mt-0.5">${app.role}</p>
                             </div>
-                            <!-- Status Action Target Selector Badge -->
                             <button onclick="cycleStatus(${app.id}, event)" class="px-2.5 py-1 text-xs font-bold rounded-lg border ${conf.bg} ${conf.text} ${conf.border} transition-all tracking-wide">
                                 ${app.status}
                             </button>
                         </div>
 
-                        <!-- Secondary Extended Attribute Grid Frame -->
                         <div class="space-y-1.5 border-t border-slate-800/60 pt-3">
                             ${salaryRow}
                             ${contactRow}
                         </div>
 
-                        <!-- Footer Actions Row Element Layout -->
                         <div class="flex justify-between items-center border-t border-slate-800/60 pt-3 mt-1">
                             <div class="flex flex-col items-start">
                                 <span class="text-[11px] text-slate-500 font-medium flex items-center gap-1">
@@ -338,6 +404,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            renderResumeSection();
             render();
         });
     </script>
