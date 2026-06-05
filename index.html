@@ -15,10 +15,8 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<!-- UPDATED: White/Light mode background styling applied -->
 <body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen pb-32">
 
-    <!-- Header & Metrics Dashboard -->
     <header class="sticky top-0 bg-white/90 backdrop-blur-md border-b border-slate-200 z-30 px-4 py-4 shadow-sm">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <h1 class="text-xl font-bold tracking-tight text-indigo-600 flex items-center gap-2">
@@ -32,10 +30,8 @@
         </div>
     </header>
 
-    <!-- Main Content Container -->
     <main class="max-w-md mx-auto px-4 mt-4">
         
-        <!-- Mobile Resume Center Hub -->
         <div class="bg-white border border-slate-200 rounded-xl p-4 mb-5 shadow-sm">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -61,7 +57,6 @@
             </div>
         </div>
         
-        <!-- Filter Pills Navigation -->
         <div class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar" id="filter-tabs">
             <button onclick="setFilter('All')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-indigo-600 text-white shadow-sm transition-all whitespace-nowrap" data-filter="All">All</button>
             <button onclick="setFilter('Applied')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap" data-filter="Applied">Applied</button>
@@ -70,31 +65,23 @@
             <button onclick="setFilter('Rejected')" class="filter-tab px-4 py-2 text-xs font-semibold rounded-full bg-white border border-slate-200 text-slate-500 transition-all whitespace-nowrap" data-filter="Rejected">Archived</button>
         </div>
 
-        <!-- Applications Feed Container -->
-        <div id="applications-feed" class="space-y-4">
-            <!-- JavaScript dynamic feed items load here -->
-        </div>
+        <div id="applications-feed" class="space-y-4"></div>
 
-        <!-- Empty State Fallback -->
         <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 text-slate-400 text-center">
             <i data-lucide="folder-open" class="w-12 h-12 mb-2 stroke-[1.5]"></i>
             <p class="text-sm">No job matches found in this screen view.</p>
         </div>
     </main>
 
-    <!-- Floating Trigger Bottom Sheet Button -->
     <div class="fixed bottom-6 left-0 right-0 px-4 z-40 max-w-md mx-auto">
         <button onclick="toggleForm(true)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 active:scale-[0.99] transition-transform text-base">
             <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Application Details
         </button>
     </div>
 
-    <!-- Interactive Mobile Drawer Panel (Slide Up Bottom Sheet) -->
     <div id="form-overlay" class="fixed inset-0 bg-slate-900/40 z-50 transition-opacity opacity-0 pointer-events-none duration-300" onclick="toggleForm(false)">
         <div id="form-sheet" class="absolute bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-2xl p-6 transform translate-y-full transition-transform duration-300 ease-out overflow-y-auto max-h-[90vh] shadow-2xl" onclick="event.stopPropagation()">
-            
             <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-5"></div>
-            
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <i data-lucide="file-plus" class="text-indigo-600 w-5 h-5"></i> New Job Profile
@@ -157,9 +144,15 @@
         </div>
     </div>
 
-    <!-- Application Script Logic Block Architecture -->
     <script>
-        // Data Structures Initialization
+        // --- KEY CONFIGURATION FOR ALL COMPANION DEVICES ---
+        // Change this string variable to your own personalized identifier 
+        // to link up any secondary device (like 'my_private_tracker_secret')
+        let SYNC_ROOM_ID = localStorage.getItem('trackr_sync_room') || 'shared_user_room_token';
+        localStorage.setItem('trackr_sync_room', SYNC_ROOM_ID);
+        
+        const API_ENDPOINT = `https://kvbin.glitch.me/bins/${SYNC_ROOM_ID}`;
+
         let apps = JSON.parse(localStorage.getItem('interview_tracker_pro_apps')) || [
             { id: 1, company: 'Netflix', role: 'Senior Product Engineer', status: 'Interviewing', date: '2026-06-01', salary: '$210,000 base', link: 'https://netflix.com/careers', contact: 'Marcus Vance', deadline: '2026-06-12' }
         ];
@@ -173,12 +166,54 @@
             'Rejected': { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' }
         };
 
+        // Silent Push to Cloud Pipeline
+        async function pushToCloud() {
+            const payload = {
+                apps: apps,
+                resume: localStorage.getItem('stored_resume_profile')
+            };
+            try {
+                await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.warn('Network offline or push synchronization deferred.');
+            }
+        }
+
+        // Silent Automated Pull from Cloud Pipeline
+        async function pullFromCloud() {
+            try {
+                const res = await fetch(API_ENDPOINT);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.apps) {
+                        apps = data.apps;
+                        localStorage.setItem('interview_tracker_pro_apps', JSON.stringify(apps));
+                    }
+                    if (data.resume) {
+                        localStorage.setItem('stored_resume_profile', data.resume);
+                    } else {
+                        localStorage.removeItem('stored_resume_profile');
+                    }
+                    renderResumeSection();
+                    render();
+                } else {
+                    await pushToCloud();
+                }
+            } catch (err) {
+                console.warn('Unable to reach remote sync host. Using cached offline data.');
+            }
+        }
+
         function handleResumeUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            if (file.size > 2.5 * 1024 * 1024) {
-                alert("File is too large! Please select a file smaller than 2.5MB.");
+            if (file.size > 1.5 * 1024 * 1024) {
+                alert("File size constraint: Please limit uploads below 1.5MB for quick cloud syncing operations.");
                 return;
             }
 
@@ -190,6 +225,7 @@
                 };
                 localStorage.setItem('stored_resume_profile', JSON.stringify(resumeData));
                 renderResumeSection();
+                syncData();
             };
             reader.readAsDataURL(file);
         }
@@ -208,10 +244,11 @@
         }
 
         function deleteResume() {
-            if (confirm("Are you sure you want to remove your stored resume file?")) {
+            if (confirm("Remove stored resume across connected systems?")) {
                 localStorage.removeItem('stored_resume_profile');
                 document.getElementById('resume-input').value = "";
                 renderResumeSection();
+                syncData();
             }
         }
 
@@ -308,6 +345,7 @@
         function syncData() {
             localStorage.setItem('interview_tracker_pro_apps', JSON.stringify(apps));
             render();
+            pushToCloud();
         }
 
         function render() {
@@ -336,7 +374,7 @@
                     const deadDate = new Date(app.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     deadlineBadge = `
                         <div class="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md border border-rose-100">
-                            <i data-lucide="clock" class="w-3 h-3"></i> Next Step: ${deadDate}
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i> Next Step: ${deadDate}
                         </div>
                     `;
                 }
@@ -398,6 +436,7 @@
         document.addEventListener("DOMContentLoaded", () => {
             renderResumeSection();
             render();
+            pullFromCloud(); 
         });
     </script>
 </body>
