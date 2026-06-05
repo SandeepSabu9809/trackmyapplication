@@ -147,14 +147,11 @@
     </div>
 
     <script>
-    const JSONBIN_KEY = '$2a$10$ZYvJMJWxhZSYkI6w2/KG6OMsklsvtwOkqangeWSbd1HK/AkGSy.fi';
-    const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
-    const LS_BIN = 'trackrpro_bin_id';
+    const FB_URL = 'https://trackerpro-15c96-default-rtdb.firebaseio.com';
     const LS_APPS = 'interview_tracker_pro_apps';
     const LS_RESUME = 'stored_resume_profile';
 
     let apps = JSON.parse(localStorage.getItem(LS_APPS) || '[]');
-    let binId = localStorage.getItem(LS_BIN) || null;
     let currentFilter = 'All';
     let syncTimer = null;
     let isSyncing = false;
@@ -179,36 +176,17 @@
         }
     }
 
-    async function apiHeaders() {
-        return { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY };
-    }
-
-    async function createBin(payload) {
-        const res = await fetch(`${JSONBIN_BASE}/b`, {
-            method: 'POST',
-            headers: { ...(await apiHeaders()), 'X-Bin-Name': 'TrackrPro', 'X-Bin-Private': 'false' },
-            body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        return json.metadata?.id || null;
-    }
-
     async function pushToCloud() {
         if (isSyncing) return;
         isSyncing = true;
         setVisualIndicator('syncing');
-        const payload = { apps, resume: localStorage.getItem(LS_RESUME) || null };
         try {
-            if (!binId) {
-                binId = await createBin(payload);
-                if (binId) localStorage.setItem(LS_BIN, binId);
-            } else {
-                await fetch(`${JSONBIN_BASE}/b/${binId}`, {
-                    method: 'PUT',
-                    headers: await apiHeaders(),
-                    body: JSON.stringify(payload)
-                });
-            }
+            const payload = { apps };
+            await fetch(`${FB_URL}/data/apps.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
             setVisualIndicator('online');
         } catch (e) {
             setVisualIndicator('offline');
@@ -217,22 +195,43 @@
         isSyncing = false;
     }
 
+    async function pushResume() {
+        const resumeJSON = localStorage.getItem(LS_RESUME);
+        try {
+            await fetch(`${FB_URL}/data/resume.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resume: resumeJSON || null })
+            });
+        } catch (e) {
+            console.error('Resume push failed', e);
+        }
+    }
+
     async function pullFromCloud() {
-        if (!binId) { setVisualIndicator('offline'); return; }
         setVisualIndicator('syncing');
         try {
-            const res = await fetch(`${JSONBIN_BASE}/b/${binId}/latest`, { headers: await apiHeaders() });
-            if (!res.ok) { setVisualIndicator('offline'); return; }
-            const json = await res.json();
-            const data = json.record;
-            if (data?.apps) {
-                apps = data.apps;
-                localStorage.setItem(LS_APPS, JSON.stringify(apps));
+            // Pull apps
+            const res = await fetch(`${FB_URL}/data/apps.json`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data?.apps) {
+                    apps = data.apps;
+                    localStorage.setItem(LS_APPS, JSON.stringify(apps));
+                    render();
+                }
             }
-            if (data?.resume) localStorage.setItem(LS_RESUME, data.resume);
-            else localStorage.removeItem(LS_RESUME);
-            renderResumeSection();
-            render();
+            // Pull resume
+            const rRes = await fetch(`${FB_URL}/data/resume.json`);
+            if (rRes.ok) {
+                const rData = await rRes.json();
+                if (rData?.resume) {
+                    localStorage.setItem(LS_RESUME, rData.resume);
+                } else {
+                    localStorage.removeItem(LS_RESUME);
+                }
+                renderResumeSection();
+            }
             setVisualIndicator('online');
         } catch (e) {
             setVisualIndicator('offline');
@@ -256,7 +255,7 @@
         reader.onload = function(e) {
             localStorage.setItem(LS_RESUME, JSON.stringify({ name: file.name, dataUrl: e.target.result }));
             renderResumeSection();
-            debouncedPush();
+            pushResume();
         };
         reader.readAsDataURL(file);
     }
@@ -275,7 +274,7 @@
             localStorage.removeItem(LS_RESUME);
             document.getElementById('resume-input').value = "";
             renderResumeSection();
-            debouncedPush();
+            pushResume();
         }
     }
 
@@ -454,11 +453,7 @@
     document.addEventListener("DOMContentLoaded", async () => {
         renderResumeSection();
         render();
-        if (binId) {
-            await pullFromCloud();
-        } else {
-            await pushToCloud();
-        }
+        await pullFromCloud();
         setInterval(pullFromCloud, 15000);
     });
     </script>
